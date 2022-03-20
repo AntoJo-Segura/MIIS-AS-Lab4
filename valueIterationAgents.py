@@ -62,6 +62,17 @@ class ValueIterationAgent(ValueEstimationAgent):
     def runValueIteration(self):
         # Write value iteration code here
         "*** YOUR CODE HERE ***"
+        startState = self.mdp.getStartState()
+        for i in range(self.iterations):
+            values = self.values.copy()
+            for s in self.mdp.getStates():
+                actions_from_s = self.mdp.getPossibleActions(s)
+                if len(actions_from_s) == 0:
+                    values[s] = 0
+                else:
+                    qval = map(lambda a: self.computeQValueFromValues(s, a), actions_from_s)
+                    values[s] = max(qval)
+            self.values = values
 
     def getValue(self, state):
         """
@@ -75,7 +86,15 @@ class ValueIterationAgent(ValueEstimationAgent):
           value function stored in self.values.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def _expected_R(next_state, probability):
+            return probability * (
+                self.mdp.getReward(state, action, next_state) +
+                self.discount * self.getValue(next_state)
+            )
+        return sum(map(
+            lambda x: _expected_R(x[0], x[1]), #xo = state; x1 = prob
+            self.mdp.getTransitionStatesAndProbs(state, action)
+        ))
 
     def computeActionFromValues(self, state):
         """
@@ -87,7 +106,18 @@ class ValueIterationAgent(ValueEstimationAgent):
           terminal state, you should return None.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        max_a = None
+        max_q = -99999
+        actions_from_s = self.mdp.getPossibleActions(state)
+        if len(actions_from_s) == 0:
+            return max_q
+        for a in actions_from_s:
+          q_value = self.computeQValueFromValues(state, a)
+          if q_value > max_q:
+            max_q = q_value
+            max_a = a
+        return max_a
+
 
     def getPolicy(self, state):
         return self.computeActionFromValues(state)
